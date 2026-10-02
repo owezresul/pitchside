@@ -3,6 +3,7 @@ import { BIBS, bibOf, useStore } from '../store';
 import { bracketSize, playBracket, playoffSetup, type BracketMatch, type Slot } from '../engine';
 import { renderBracketCard } from '../lib/shareCard';
 import { SessionActions } from '../components/SessionActions';
+import { Support } from '../components/Support';
 import { useI18n } from '../i18n/react';
 
 const COL_W = 180;
@@ -154,6 +155,7 @@ export function Bracket() {
       )}
 
       <SessionActions render={() => renderBracketCard(teams, bracket, seeds.length, projected)} renderKey={`${lang}|${teams.map((tm) => tm.name).join()}|${history.length}|${seeds.join()}`} />
+      {out && <Support />}
     </div>
   );
 }

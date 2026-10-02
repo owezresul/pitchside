@@ -1,6 +1,19 @@
 import { isNative } from './lib/native';
 
 export const REPO_URL = 'https://github.com/owezresul/pitchside';
+/** Where people can reach the author. */
+export const CONTACT = {
+  telegram: 'https://t.me/+37127294250',
+  whatsapp: 'https://wa.me/37127294250',
+  github: 'https://github.com/owezresul',
+};
+
+/**
+ * Link for donations (GitHub Sponsors, Ko-fi, Buy Me a Coffee...). While this is empty the
+ * Donate button stays hidden and only the contact links show.
+ */
+export const DONATE_URL = '';
+
 /** Android builds are attached to GitHub releases (see .github/workflows/android.yml). */
 export const APK_URL = `${REPO_URL}/releases/latest`;
 
@@ -15,4 +28,10 @@ export function getShareUrl(): string | null {
   if (isNative) return null;
   const { hostname, origin } = window.location;
   return hostname === 'localhost' || hostname === '127.0.0.1' ? null : origin;
+}
+
+/** The share link without "https://" for printing on the picture, or null when there is none. */
+export function getShareLabel(): string | null {
+  const url = getShareUrl();
+  return url ? url.replace(/^https?:\/\//, '') : null;
 }

@@ -1,9 +1,18 @@
 import { BIBS, bibOf } from '../store';
 import { isNative, shareImageNative } from './native';
 import { getI18n } from '../i18n/react';
+import { getShareLabel } from '../config';
 import { bracketSize, type Bracket, type PlayedMatch, type StandingRow, type Team } from '../engine';
 
 const W = 1080;
+
+/** "Pitchside · address" in the bottom-left corner. Skipped when the app has no public address yet. */
+function drawLink(g: CanvasRenderingContext2D, x: number, y: number) {
+  const label = getShareLabel();
+  if (!label) return;
+  g.textAlign = 'left'; g.fillStyle = '#B9CBC0'; g.font = `700 28px ${FONT}`;
+  g.fillText(`Pitchside · ${label}`, x, y);
+}
 const FONT = '"Archivo Variable", system-ui, sans-serif';
 
 export async function renderShareCard(
@@ -83,6 +92,7 @@ export async function renderShareCard(
       g.textAlign = 'left'; g.font = `600 36px ${FONT}`; g.fillText(name(m.away), 610, y);
     }
   }
+  drawLink(g, 90, H - 80);
   g.textAlign = 'right'; g.fillStyle = 'rgba(238,241,230,0.35)'; g.font = `500 26px ${FONT}`;
   g.fillText(new Date().toLocaleDateString(lang === 'ru' ? 'ru-RU' : undefined, { day: 'numeric', month: 'short', year: 'numeric' }), W - 90, H - 80);
 
@@ -211,6 +221,7 @@ export async function renderBracketCard(teams: Team[], bracket: Bracket, seedCou
     drawCard(third, treeX, treeBottom + 70);
   }
 
+  drawLink(g, MARGIN, H - 80);
   g.textAlign = 'right'; g.fillStyle = 'rgba(238,241,230,0.35)'; g.font = `500 26px ${FONT}`;
   g.fillText(new Date().toLocaleDateString(i18n.lang === 'ru' ? 'ru-RU' : undefined, { day: 'numeric', month: 'short', year: 'numeric' }), W - MARGIN, H - 80);
   return new Promise((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error('Could not render image'))), 'image/png'));

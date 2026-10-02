@@ -4,6 +4,7 @@ import { renderShareCard } from '../lib/shareCard';
 import { SessionActions } from '../components/SessionActions';
 import { useI18n } from '../i18n/react';
 import { ChampionCard } from '../components/ChampionCard';
+import { Support } from '../components/Support';
 
 function Standings({ t: tbl, name }: { t: LeagueTable; name: (id: string) => string }) {
   const { t, L } = useI18n();
@@ -78,6 +79,7 @@ export function Table() {
       <SessionActions
         render={() => renderShareCard(teams, history, tables)}
         renderKey={`${lang}|${teams.map((tm) => tm.name).join()}|${history.length}`} />
+      {champs && <Support />}
     </div>
   );
 }

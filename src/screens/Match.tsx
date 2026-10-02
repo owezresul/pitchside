@@ -3,6 +3,7 @@ import { BIBS, bibOf, selectFixture, useStore } from '../store';
 import { formatClock, useRemaining } from '../lib/useRemaining';
 import { useI18n } from '../i18n/react';
 import { ChampionCard } from '../components/ChampionCard';
+import { Support } from '../components/Support';
 import { inPlayoffs, leagueChampions, leagueTotal, nextFixture, playBracket, playoffSetup } from '../engine';
 
 const RESTING_FORMATS = ['round-robin', 'winner-stays', 'timed-rotation'];
@@ -84,6 +85,7 @@ export function Match({ onDone }: { onDone: () => void }) {
           <p className="hint">{setup ? t('match.doneBracket') : t('match.doneTable')}</p>
           <button className="btn btn--primary btn--wide" onClick={onDone}>{setup ? t('match.seeBracket') : t('match.seeTable')}</button>
         </section>
+        <Support />
       </div>
     );
   }

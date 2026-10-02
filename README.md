@@ -26,7 +26,7 @@ It installs to your home screen and works with no signal, so it keeps running on
 - Match timer with presets or any custom length, survives a page refresh.
 - One-tap goals, undo of the last result, auto-generated next match.
 - Optional player list with balanced or random splitting into teams.
-- Shareable PNG images of tables and brackets, drawn on a canvas in the browser. Sharing sends the picture with a caption that links to the web app, where people can try it or install it.
+- Shareable PNG images of tables and brackets, drawn on a canvas in the browser. Sharing sends the picture with a caption ("Made with Pitchside, you can download it here: link") and the same address printed in the corner of the picture, so people can try the web app or install it.
 - English and Russian, switchable from the globe menu in the header. The language is remembered, and the first visit follows the browser language.
 
 ## Tech
@@ -112,7 +112,7 @@ Issues and pull requests are welcome. Please run `npm run lint`, `npm test` and 
 
 ## Support
 
-Pitchside is free and open source. If it saved your Sunday kickabout, you can support development with a donation (link coming soon).
+Pitchside is free and open source. If it saved your Sunday kickabout, you can support development with a donation (set `DONATE_URL` in `src/config.ts`; the app shows a small support note when a tournament finishes). Contact links live in the same file.
 
 ## License
 
