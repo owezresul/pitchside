@@ -3,6 +3,7 @@ import { BIBS, bibOf, useStore } from '../store';
 import { bracketSize, playBracket, playoffSetup, type BracketMatch, type Slot } from '../engine';
 import { renderBracketCard } from '../lib/shareCard';
 import { SessionActions } from '../components/SessionActions';
+import { useI18n } from '../i18n/react';
 
 const COL_W = 180;
 const GAP = 40;
@@ -13,6 +14,7 @@ const CARD_H = 88;
 function MatchCard({ m, name, isNext, compact, style }: {
   m: BracketMatch; name: (id: string) => string; isNext: boolean; compact?: boolean; style?: React.CSSProperties;
 }) {
+  const { t, L } = useI18n();
   const r = m.result;
   const row = (slot: Slot, side: 'home' | 'away') => {
     const won = r && slot.team === r.winner;
@@ -25,35 +27,36 @@ function MatchCard({ m, name, isNext, compact, style }: {
             <span className="bm__name">{name(slot.team)}</span>
           </>
         ) : (
-          <span className="bm__name bm__name--pending">{slot.label}</span>
+          <span className="bm__name bm__name--pending">{L(slot.label)}</span>
         )}
-        {won && r?.onPenalties && <span className="bm__pen">pens</span>}
+        {won && r?.onPenalties && <span className="bm__pen">{t('bracket.pens')}</span>}
         {score !== null && <span className="bm__score">{score}</span>}
       </div>
     );
   };
   return (
-    <article className={`bm${isNext ? ' bm--next' : ''}${compact ? ' bm--compact' : ''}`} style={style} aria-label={m.label}>
+    <article className={`bm${isNext ? ' bm--next' : ''}${compact ? ' bm--compact' : ''}`} style={style} aria-label={L(m.label)}>
       {row(m.home, 'home')}
       {row(m.away, 'away')}
-      {!compact && r?.onPenalties && <p className="bm__note">{name(r.winner)} won on penalties</p>}
-      {!compact && isNext && <p className="bm__note">Playing now</p>}
+      {!compact && r?.onPenalties && <p className="bm__note">{t('results.penalties', { team: name(r.winner) })}</p>}
+      {!compact && isNext && <p className="bm__note">{t('bracket.playingNow')}</p>}
     </article>
   );
 }
 
 export function Bracket() {
+  const { t, L, lang } = useI18n();
   const teams = useStore((s) => s.teams);
   const history = useStore((s) => s.history);
   const config = useStore((s) => s.config);
   const [view, setView] = useState<'tree' | 'list'>('tree');
   const scroller = useRef<HTMLDivElement>(null);
 
-  const setup = playoffSetup(config, teams.map((t) => t.id), history);
+  const setup = playoffSetup(config, teams.map((tm) => tm.id), history);
   const seeds = setup?.seeds ?? [];
   const bracket = playBracket(seeds, setup?.history ?? [], setup?.thirdPlace ?? false);
   const projected = setup?.projected ?? false;
-  const name = (id: string) => teams.find((t) => t.id === id)?.name ?? id;
+  const name = (id: string) => teams.find((tm) => tm.id === id)?.name ?? id;
   const size = bracketSize(Math.max(seeds.length, 2));
   const byes = seeds.slice(0, size - seeds.length).map((id) => ({ id, name: name(id) }));
   const out = bracket.outcome;
@@ -62,7 +65,7 @@ export function Bracket() {
   const tiers = Math.log2(size);
   const real = bracket.rounds.flatMap((r) => r.matches).filter((m) => m.tier !== undefined);
   const third = bracket.rounds.flatMap((r) => r.matches).find((m) => m.tier === undefined);
-  const tierName = (t: number) => bracket.rounds.find((r) => r.matches.some((m) => m.tier === t))?.name ?? '';
+  const tierName = (tier: number) => L(bracket.rounds.find((r) => r.matches.some((m) => m.tier === tier))?.name ?? '');
   const x = (t: number) => t * (COL_W + GAP);
   const cy = (m: BracketMatch) => HEAD + (m.pos! + 0.5) * 2 ** (m.tier! + 1) * U;
   const treeW = tiers * COL_W + (tiers - 1) * GAP;
@@ -87,18 +90,18 @@ export function Bracket() {
     <div className="screen">
       {out && champBib && (
         <section className="champ" style={{ background: champBib.color, color: champBib.ink }}>
-          <p className="champ__tag">Champions</p>
+          <p className="champ__tag">{t('match.champions')}</p>
           <h2 className="champ__name">{name(out.champion)}</h2>
           <p className="champ__sub">
-            Runner-up {name(out.runnerUp)}{out.third ? `. Third place ${name(out.third)}.` : '.'}
+            {t('bracket.runnerUp', { team: name(out.runnerUp) })}{out.third ? `. ${t('bracket.third', { team: name(out.third) })}.` : '.'}
           </p>
         </section>
       )}
 
       <div className="block__head">
-        <h2 className="h2">Bracket</h2>
-        <div className="seg seg--small" role="radiogroup" aria-label="Bracket view">
-          {([['tree', 'Bracket'], ['list', 'List']] as const).map(([id, label]) => (
+        <h2 className="h2">{t('bracket.title')}</h2>
+        <div className="seg seg--small" role="radiogroup" aria-label={t('bracket.viewAria')}>
+          {([['tree', t('bracket.title')], ['list', t('bracket.list')]] as const).map(([id, label]) => (
             <button key={id} type="button" role="radio" aria-checked={view === id} className="seg__item" onClick={() => setView(id)}>
               {label}
             </button>
@@ -107,15 +110,19 @@ export function Bracket() {
       </div>
 
       {byes.length > 0 && (
-        <p className="hint">{byes.length > 3 ? `The top ${byes.length} seeds` : byes.map((t) => t.name).join(' and ')} {byes.length > 1 ? 'have' : 'has'} a bye and start in the next round.</p>
+        <p className="hint">
+          {byes.length > 3
+            ? t('bracket.byeTop', { n: byes.length })
+            : t(byes.length > 1 ? 'bracket.byeMany' : 'bracket.byeOne', { names: byes.map((b) => b.name).join(t('bracket.and')) })}
+        </p>
       )}
       {projected && (
-        <p className="hint hint--note">Projected from the table so far. The seeds update until the group stage ends.</p>
+        <p className="hint hint--note">{t('bracket.projected')}</p>
       )}
 
       {view === 'tree' ? (
         <>
-          {tiers > 2 && <p className="hint">Swipe sideways to follow the bracket to the final.</p>}
+          {tiers > 2 && <p className="hint">{t('bracket.swipe')}</p>}
           <div className="tree-scroll" ref={scroller}>
             <div className="tree" style={{ width: treeW, height: treeH }}>
               <svg className="tree__links" width={treeW} height={treeH} aria-hidden>
@@ -132,7 +139,7 @@ export function Bracket() {
           </div>
           {third && (
             <section className="round">
-              <h3 className="round__name">Third place</h3>
+              <h3 className="round__name">{L('Third place')}</h3>
               <MatchCard m={third} name={name} isNext={bracket.next?.label === third.label} />
             </section>
           )}
@@ -140,13 +147,13 @@ export function Bracket() {
       ) : (
         bracket.rounds.map((round) => (
           <section key={round.name} className="round">
-            <h3 className="round__name">{round.name}</h3>
+            <h3 className="round__name">{L(round.name)}</h3>
             {round.matches.map((m) => <MatchCard key={m.label} m={m} name={name} isNext={bracket.next?.label === m.label} />)}
           </section>
         ))
       )}
 
-      <SessionActions render={() => renderBracketCard(teams, bracket, seeds.length, projected)} renderKey={`${teams.map((t) => t.name).join()}|${history.length}|${seeds.join()}`} />
+      <SessionActions render={() => renderBracketCard(teams, bracket, seeds.length, projected)} renderKey={`${lang}|${teams.map((tm) => tm.name).join()}|${history.length}|${seeds.join()}`} />
     </div>
   );
 }

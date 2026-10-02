@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useStore } from '../store';
 import { shareOrDownload } from '../lib/shareCard';
+import { useI18n } from '../i18n/react';
 
 /** Share preview + share button + two-step "end session". Used by the table and the bracket. */
 export function SessionActions({ render, renderKey }: { render: () => Promise<Blob>; renderKey: string }) {
+  const { t } = useI18n();
   const endSession = useStore((s) => s.endSession);
   const [blob, setBlob] = useState<Blob | null>(null);
   const [url, setUrl] = useState<string | null>(null);
@@ -23,23 +25,23 @@ export function SessionActions({ render, renderKey }: { render: () => Promise<Bl
 
   return (
     <>
-      <h2 className="h2">Share</h2>
-      {url && <img className="sharepreview" src={url} alt="Preview of the image you can share" />}
+      <h2 className="h2">{t('share.title')}</h2>
+      {url && <img className="sharepreview" src={url} alt={t('share.previewAlt')} />}
       <button className="btn btn--primary btn--wide" disabled={!blob} onClick={() => blob && shareOrDownload(blob)}>
-        Share image
+        {t('share.button')}
       </button>
 
       <div className="danger">
         {confirm ? (
           <>
-            <p className="hint">This clears all results and goes back to setup.</p>
+            <p className="hint">{t('end.warn')}</p>
             <div className="danger__row">
-              <button className="btn btn--ghost" onClick={() => setConfirm(false)}>Keep playing</button>
-              <button className="btn btn--danger" onClick={endSession}>End session</button>
+              <button className="btn btn--ghost" onClick={() => setConfirm(false)}>{t('end.keep')}</button>
+              <button className="btn btn--danger" onClick={endSession}>{t('end.confirm')}</button>
             </div>
           </>
         ) : (
-          <button className="btn btn--ghost btn--wide" onClick={() => setConfirm(true)}>End session</button>
+          <button className="btn btn--ghost btn--wide" onClick={() => setConfirm(true)}>{t('end.confirm')}</button>
         )}
       </div>
     </>

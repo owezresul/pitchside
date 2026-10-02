@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { detectLang, teamName, type Lang } from './i18n/dict';
 import {
   computeStandings, defaultConfig, draftTeams, inPlayoffs, nextFixture, normalizeConfig,
   type DraftMode, type Fixture, type FormatConfig, type PlayedMatch, type Player, type Team, type TeamId,
@@ -26,12 +27,13 @@ export function bibAt(i: number): Bib {
 }
 export const bibOf = (id: TeamId): Bib => bibAt(Number(id.slice(1)));
 
-const makeTeams = (n: number, old: Team[] = []): Team[] =>
-  Array.from({ length: n }, (_, i) => old[i] ?? { id: `t${i}`, name: bibAt(i).name });
+const makeTeams = (n: number, old: Team[] = [], lang: Lang = 'en'): Team[] =>
+  Array.from({ length: n }, (_, i) => old[i] ?? { id: `t${i}`, name: teamName(i, lang) });
 
 type Timer = { running: boolean; endsAt: number | null; leftMs: number };
 
 interface State {
+  lang: Lang;
   phase: 'setup' | 'live';
   teams: Team[];
   config: FormatConfig;
@@ -43,6 +45,7 @@ interface State {
   live: { home: number; away: number; shootout: 'home' | 'away' | null };
   timer: Timer;
 
+  setLang: (lang: Lang) => void;
   setTeamCount: (n: number) => void;
   renameTeam: (id: TeamId, name: string) => void;
   setConfig: (c: FormatConfig) => void;
@@ -64,11 +67,14 @@ interface State {
 
 const fresh = (minutes: number): Timer => ({ running: false, endsAt: null, leftMs: minutes * 60_000 });
 
+const initialLang = detectLang();
+
 export const useStore = create<State>()(
   persist(
     (set, get) => ({
+      lang: initialLang,
       phase: 'setup',
-      teams: makeTeams(3),
+      teams: makeTeams(3, [], initialLang),
       config: defaultConfig,
       matchMinutes: 10,
       players: [],
@@ -78,10 +84,13 @@ export const useStore = create<State>()(
       live: { home: 0, away: 0, shootout: null },
       timer: fresh(10),
 
+      // Teams still carrying their default name follow the new language; renamed teams are left alone.
+      setLang: (lang) =>
+        set((s) => ({ lang, teams: s.teams.map((t, i) => (t.name === teamName(i, s.lang) ? { ...t, name: teamName(i, lang) } : t)) })),
       setTeamCount: (n) =>
         set((s) => {
           const count = Math.min(MAX_TEAMS, Math.max(MIN_TEAMS, n));
-          return { teams: makeTeams(count, s.teams), config: normalizeConfig(s.config, count), roster: null };
+          return { teams: makeTeams(count, s.teams, s.lang), config: normalizeConfig(s.config, count), roster: null };
         }),
       renameTeam: (id, name) => set((s) => ({ teams: s.teams.map((t) => (t.id === id ? { ...t, name } : t)) })),
       setConfig: (config) => set((s) => ({ config: normalizeConfig(config, s.teams.length) })),

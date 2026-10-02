@@ -1,5 +1,6 @@
 import { BIBS, bibOf } from '../store';
 import { isNative, shareImageNative } from './native';
+import { getI18n } from '../i18n/react';
 import { bracketSize, type Bracket, type PlayedMatch, type StandingRow, type Team } from '../engine';
 
 const W = 1080;
@@ -10,15 +11,16 @@ export async function renderShareCard(
   history: PlayedMatch[],
   tables: { title: string | null; rows: StandingRow[] }[],
 ): Promise<Blob> {
+  const { t, L, lang } = getI18n();
   await document.fonts.load(`800 40px ${FONT}`);
   await document.fonts.load(`500 40px ${FONT}`);
-  const totalRows = tables.reduce((n, t) => n + t.rows.length, 0);
+  const totalRows = tables.reduce((n, tb) => n + tb.rows.length, 0);
   const rowH = totalRows > 8 ? 64 : Math.min(96, 560 / Math.max(totalRows, 1));
   const big = rowH >= 80;
-  const blockH = (t: { title: string | null; rows: StandingRow[] }) => (t.title ? 64 : 0) + 56 + t.rows.length * rowH + 40;
+  const blockH = (tb: { title: string | null; rows: StandingRow[] }) => (tb.title ? 64 : 0) + 56 + tb.rows.length * rowH + 40;
   const recent = history.slice(-5).reverse();
   const recentH = recent.length ? 120 + recent.length * 62 : 0;
-  const H = Math.max(1350, 300 + tables.reduce((n, t) => n + blockH(t), 0) + recentH + 140);
+  const H = Math.max(1350, 300 + tables.reduce((n, tb) => n + blockH(tb), 0) + recentH + 140);
 
   const c = document.createElement('canvas');
   c.width = W; c.height = H;
@@ -31,22 +33,22 @@ export async function renderShareCard(
   g.beginPath(); g.arc(W / 2, H - 40, 220, Math.PI, 0); g.stroke();
 
   g.fillStyle = '#EEF1E6'; g.textBaseline = 'alphabetic'; g.textAlign = 'left';
-  g.font = `800 92px ${FONT}`; g.fillText(tables.length > 1 ? 'Groups' : 'Table', 90, 190);
+  g.font = `800 92px ${FONT}`; g.fillText(tables.length > 1 ? t('card.groups') : t('card.table'), 90, 190);
   g.fillStyle = '#8FA89B'; g.font = `500 34px ${FONT}`;
-  g.fillText(`${history.length} ${history.length === 1 ? 'match' : 'matches'} played`, 90, 240);
+  g.fillText(t('card.played', { n: history.length }), 90, 240);
 
   const cols = { p: 610, w: 690, d: 770, l: 850, gd: 930, pts: 990 };
   let y = 300;
-  for (const t of tables) {
-    if (t.title) {
+  for (const tb of tables) {
+    if (tb.title) {
       g.textAlign = 'left'; g.fillStyle = '#EEF1E6'; g.font = `800 40px ${FONT}`;
-      g.fillText(t.title, 90, y + 36); y += 64;
+      g.fillText(L(tb.title), 90, y + 36); y += 64;
     }
     g.font = `600 28px ${FONT}`; g.fillStyle = '#8FA89B'; g.textAlign = 'right';
-    g.fillText('P', cols.p, y + 34); g.fillText('W', cols.w, y + 34); g.fillText('D', cols.d, y + 34);
-    g.fillText('L', cols.l, y + 34); g.fillText('GD', cols.gd, y + 34); g.fillText('Pts', cols.pts, y + 34);
+    g.fillText(t('col.p'), cols.p, y + 34); g.fillText(t('col.w'), cols.w, y + 34); g.fillText(t('col.d'), cols.d, y + 34);
+    g.fillText(t('col.l'), cols.l, y + 34); g.fillText(t('col.gd'), cols.gd, y + 34); g.fillText(t('col.pts'), cols.pts, y + 34);
     y += 56;
-    t.rows.forEach((r, i) => {
+    tb.rows.forEach((r, i) => {
       const ry = y + i * rowH;
       const bib = bibOf(r.teamId) ?? BIBS[0];
       if (i % 2 === 0) { g.fillStyle = 'rgba(238,241,230,0.05)'; g.fillRect(70, ry, W - 140, rowH); }
@@ -60,13 +62,13 @@ export async function renderShareCard(
       g.fillText(r.goalDiff > 0 ? `+${r.goalDiff}` : String(r.goalDiff), cols.gd, my);
       g.fillStyle = '#EEF1E6'; g.font = `800 ${big ? 46 : 36}px ${FONT}`; g.fillText(String(r.points), cols.pts, my);
     });
-    y += t.rows.length * rowH + 40;
+    y += tb.rows.length * rowH + 40;
   }
 
   if (recent.length) {
     y += 40;
     g.textAlign = 'left'; g.fillStyle = '#8FA89B'; g.font = `600 28px ${FONT}`;
-    g.fillText('Latest results', 90, y);
+    g.fillText(t('card.latest'), 90, y);
     y += 30;
     for (const m of recent) {
       y += 62;
@@ -77,12 +79,13 @@ export async function renderShareCard(
     }
   }
   g.textAlign = 'right'; g.fillStyle = 'rgba(238,241,230,0.35)'; g.font = `500 26px ${FONT}`;
-  g.fillText(new Date().toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }), W - 90, H - 80);
+  g.fillText(new Date().toLocaleDateString(lang === 'ru' ? 'ru-RU' : undefined, { day: 'numeric', month: 'short', year: 'numeric' }), W - 90, H - 80);
 
   return new Promise((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error('Could not render image'))), 'image/png'));
 }
 
 export async function renderBracketCard(teams: Team[], bracket: Bracket, seedCount = teams.length, projected = false): Promise<Blob> {
+  const i18n = getI18n();
   await document.fonts.load(`800 40px ${FONT}`);
   await document.fonts.load(`500 40px ${FONT}`);
 
@@ -126,12 +129,17 @@ export async function renderBracketCard(teams: Team[], bracket: Bracket, seedCou
   g.beginPath(); g.arc(W / 2, H - 40, 220, Math.PI, 0); g.stroke();
 
   g.textBaseline = 'alphabetic'; g.textAlign = 'left';
-  g.fillStyle = '#EEF1E6'; g.font = `800 92px ${FONT}`; g.fillText(projected ? 'Playoffs (projected)' : 'Playoffs', MARGIN, 190);
+  g.fillStyle = '#EEF1E6'; g.font = `800 92px ${FONT}`; {
+    const title = projected ? i18n.t('card.playoffsProjected') : i18n.t('card.playoffs');
+    let size = 92;
+    do { g.font = `800 ${size}px ${FONT}`; size -= 4; } while (g.measureText(title).width > W - MARGIN * 2 && size > 40);
+    g.fillText(title, MARGIN, 190);
+  }
 
   if (out) {
     const bib = bibOf(out.champion) ?? BIBS[0];
     g.fillStyle = bib.color; rr(MARGIN, 250, W - MARGIN * 2, 150, 24); g.fill();
-    g.fillStyle = bib.ink; g.font = `600 30px ${FONT}`; g.fillText('Champions', MARGIN + 30, 250 + 52);
+    g.fillStyle = bib.ink; g.font = `600 30px ${FONT}`; g.fillText(i18n.t('card.champions'), MARGIN + 30, 250 + 52);
     g.font = `800 72px ${FONT}`; g.fillText(fit(name(out.champion), W - MARGIN * 2 - 60), MARGIN + 30, 250 + 124);
   }
 
@@ -139,7 +147,7 @@ export async function renderBracketCard(teams: Team[], bracket: Bracket, seedCou
   g.font = `600 26px ${FONT}`; g.fillStyle = '#8FA89B';
   for (let t = 0; t < tiers; t++) {
     const label = bracket.rounds.find((r) => r.matches.some((m) => m.tier === t))?.name;
-    if (label) g.fillText(label, x(t), treeTop + 16);
+    if (label) g.fillText(i18n.L(label), x(t), treeTop + 16);
   }
 
   // connectors
@@ -170,17 +178,21 @@ export async function renderBracketCard(teams: Team[], bracket: Bracket, seedCou
       const reserve = score !== null ? 70 : 20;
       g.textAlign = 'left';
       if (slot.team) {
-        g.font = `${lost ? 500 : 800} 30px ${FONT}`; g.fillStyle = lost ? '#8FA89B' : '#EEF1E6';
-        g.fillText(fit(name(slot.team), px + CARD_W - reserve - tx - (r?.onPenalties && !lost ? 56 : 0)), tx, baseY);
+        const avail = px + CARD_W - reserve - tx - (r?.onPenalties && !lost ? 56 : 0);
+        const nm = name(slot.team);
+        let fs = 30;
+        g.font = `${lost ? 500 : 800} ${fs}px ${FONT}`; g.fillStyle = lost ? '#8FA89B' : '#EEF1E6';
+        while (fs > 22 && g.measureText(nm).width > avail) { fs -= 2; g.font = `${lost ? 500 : 800} ${fs}px ${FONT}`; }
+        g.fillText(fit(nm, avail), tx, baseY);
       } else {
         g.font = `500 22px ${FONT}`; g.fillStyle = '#8FA89B';
-        g.fillText(fit(slot.label, px + CARD_W - reserve - tx), tx, baseY - 2);
+        g.fillText(fit(i18n.L(slot.label), px + CARD_W - reserve - tx), tx, baseY - 2);
       }
       if (score !== null) {
         g.textAlign = 'right'; g.font = `800 34px ${FONT}`; g.fillStyle = lost ? '#8FA89B' : '#EEF1E6';
         g.fillText(String(score), px + CARD_W - 20, baseY + 2);
         if (r?.onPenalties && !lost) {
-          g.font = `600 18px ${FONT}`; g.fillStyle = '#8FA89B'; g.fillText('pens', px + CARD_W - 56, baseY);
+          g.font = `600 18px ${FONT}`; g.fillStyle = '#8FA89B'; g.fillText(i18n.t('bracket.pens'), px + CARD_W - 56, baseY);
         }
       }
     });
@@ -190,12 +202,12 @@ export async function renderBracketCard(teams: Team[], bracket: Bracket, seedCou
 
   if (third) {
     g.textAlign = 'left'; g.font = `600 26px ${FONT}`; g.fillStyle = '#8FA89B';
-    g.fillText('Third place', treeX, treeBottom + 50);
+    g.fillText(i18n.L('Third place'), treeX, treeBottom + 50);
     drawCard(third, treeX, treeBottom + 70);
   }
 
   g.textAlign = 'right'; g.fillStyle = 'rgba(238,241,230,0.35)'; g.font = `500 26px ${FONT}`;
-  g.fillText(new Date().toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }), W - MARGIN, H - 80);
+  g.fillText(new Date().toLocaleDateString(i18n.lang === 'ru' ? 'ru-RU' : undefined, { day: 'numeric', month: 'short', year: 'numeric' }), W - MARGIN, H - 80);
   return new Promise((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error('Could not render image'))), 'image/png'));
 }
 

@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react';
+import { useI18n } from '../i18n/react';
 
 /** Number box you can type into. Commits while typing if the value is valid, and snaps back on blur. */
 export function NumberField(props: {
@@ -27,15 +28,16 @@ export function NumberField(props: {
 export function Stepper(props: {
   value: number; min: number; max: number; step?: number; label: string; onChange: (n: number) => void; showZero?: boolean;
 }) {
+  const { t } = useI18n();
   const step = props.step ?? 1;
   const clamp = (n: number) => Math.min(props.max, Math.max(props.min, n));
   return (
     <div className="stepper" role="group" aria-label={props.label}>
-      <button type="button" className="stepper__btn" aria-label={`Decrease ${props.label}`}
+      <button type="button" className="stepper__btn" aria-label={t('ctl.decrease', { label: props.label })}
         disabled={props.value <= props.min} onClick={() => props.onChange(clamp(props.value - step))}>−</button>
       <NumberField className="stepper__val" label={props.label} value={props.value} min={props.min} max={props.max}
         step={step} showZero={props.showZero} onCommit={props.onChange} />
-      <button type="button" className="stepper__btn" aria-label={`Increase ${props.label}`}
+      <button type="button" className="stepper__btn" aria-label={t('ctl.increase', { label: props.label })}
         disabled={props.value >= props.max} onClick={() => props.onChange(clamp(props.value + step))}>+</button>
     </div>
   );

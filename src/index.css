@@ -260,3 +260,15 @@ h1, h2, p { margin: 0; }
 .disclose__title { font-stretch: 78%; font-weight: 750; font-size: 24px; line-height: 1.1; }
 .table__title { margin: 12px 0 4px; }
 .table__row--bye td:first-child { box-shadow: inset 6px 0 0 var(--card); }
+
+/* language menu */
+.top { align-items: center; gap: 12px; }
+.top__brand { margin-right: auto; }
+.lang { position: relative; }
+.lang__btn { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 12px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--raised); font-weight: 700; font-size: 14px; letter-spacing: 0.02em; }
+.lang__btn[aria-expanded='true'] { border-color: var(--text); }
+.lang__menu { position: absolute; right: 0; top: calc(100% + 8px); z-index: 20; min-width: 190px; padding: 6px; list-style: none; border-radius: var(--r-lg); border: 1.5px solid var(--line); background: var(--raised); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35); }
+.lang__opt { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 48px; padding: 0 14px; border: 0; border-radius: var(--r-md); background: transparent; text-align: left; font-weight: 600; }
+.lang__opt:hover, .lang__opt:focus-visible { background: var(--raised-2); }
+.lang li[aria-selected='true'] .lang__native { color: var(--card); }
+.lang__check { color: var(--card); font-weight: 800; }

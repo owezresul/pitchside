@@ -27,6 +27,7 @@ It installs to your home screen and works with no signal, so it keeps running on
 - One-tap goals, undo of the last result, auto-generated next match.
 - Optional player list with balanced or random splitting into teams.
 - Shareable PNG images of tables and brackets, drawn on a canvas in the browser.
+- English and Russian, switchable from the globe menu in the header. The language is remembered, and the first visit follows the browser language.
 
 ## Tech
 
@@ -52,6 +53,12 @@ npm test           # engine tests
 npm run build      # type-check + production build (includes the service worker)
 npm run preview    # serve the production build, test install/offline here
 ```
+
+## Translations
+
+All text lives in `src/i18n/dict.ts`: `en` is the source of truth and `ru` must have exactly the same keys (TypeScript and a test enforce it). Plurals use `Intl.PluralRules`, so Russian forms such as "1 матч, 3 матча, 5 матчей" work. The tournament engine labels matches in English and the UI translates those labels when it shows them.
+
+To add a language: add it to `Lang` and `LANGS`, copy the `en` block into a new dictionary, add it to `dicts`, and add its default team names to `BIB_NAMES`. The menu picks it up automatically.
 
 ## Android app
 

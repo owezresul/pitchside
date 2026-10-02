@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { setKeepAwake } from './lib/native';
 import { useStore } from './store';
+import { LangSwitch } from './components/LangSwitch';
+import { useI18n } from './i18n/react';
 import { playoffRule } from './engine';
 import { Setup } from './screens/Setup';
 import { Match } from './screens/Match';
@@ -19,13 +21,16 @@ export default function App() {
   useEffect(() => { setKeepAwake(running); return () => setKeepAwake(false); }, [running]);
 
   const teams = useStore((s) => s.teams);
+  const { t, lang } = useI18n();
+  useEffect(() => { document.documentElement.lang = lang; }, [lang]);
   const hasPlayoffs = playoffRule(config, teams.map((t) => t.id)) !== null;
-  const tabs: [Tab, string][] =
+  const tabIds: Tab[] =
     config.format === 'knockout'
-      ? [['match', 'Match'], ['bracket', 'Bracket'], ['results', 'Results']]
+      ? ['match', 'bracket', 'results']
       : hasPlayoffs
-        ? [['match', 'Match'], ['table', 'Table'], ['bracket', 'Bracket'], ['results', 'Results']]
-        : [['match', 'Match'], ['table', 'Table'], ['results', 'Results']];
+        ? ['match', 'table', 'bracket', 'results']
+        : ['match', 'table', 'results'];
+  const tabs = tabIds.map((id) => [id, t(`tab.${id}`)] as [Tab, string]);
   const tab: Tab = tabs.some(([id]) => id === chosen) ? chosen : 'match';
   const doneTab: Tab = hasPlayoffs ? 'bracket' : 'table';
 
@@ -33,7 +38,8 @@ export default function App() {
     <div className="app">
       <header className="top">
         <span className="top__brand">Pitchside</span>
-        <span className="top__ctx">{phase === 'setup' ? 'New session' : `${played} played`}</span>
+        <span className="top__ctx">{phase === 'setup' ? t('top.new') : t('top.played', { n: played })}</span>
+        <LangSwitch />
       </header>
 
       <main className="main">
@@ -45,7 +51,7 @@ export default function App() {
       </main>
 
       {phase === 'live' && (
-        <nav className="tabs" aria-label="Session" style={{ gridTemplateColumns: `repeat(${tabs.length}, 1fr)` }}>
+        <nav className="tabs" aria-label={t('app.session')} style={{ gridTemplateColumns: `repeat(${tabs.length}, 1fr)` }}>
           {tabs.map(([id, label]) => (
             <button key={id} className="tabs__item" aria-current={tab === id ? 'page' : undefined} onClick={() => setTab(id)}>
               {label}

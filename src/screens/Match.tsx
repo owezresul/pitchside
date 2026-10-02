@@ -1,11 +1,13 @@
 import { useMemo } from 'react';
 import { BIBS, bibOf, selectFixture, useStore } from '../store';
 import { formatClock, useRemaining } from '../lib/useRemaining';
+import { useI18n } from '../i18n/react';
 import { inPlayoffs, leagueTotal, nextFixture, playBracket, playoffSetup } from '../engine';
 
 const RESTING_FORMATS = ['round-robin', 'winner-stays', 'timed-rotation'];
 
 function Clock() {
+  const { t } = useI18n();
   const minutes = useStore((s) => s.matchMinutes);
   const running = useStore((s) => s.timer.running);
   const toggle = useStore((s) => s.toggleTimer);
@@ -16,13 +18,14 @@ function Clock() {
     <div className={`clock${over ? ' clock--over' : ''}`}>
       <output className="clock__time" aria-live="off">{formatClock(left)}</output>
       <button className="btn btn--ghost" onClick={toggle}>
-        {over ? 'Restart clock' : running ? 'Pause' : left === minutes * 60_000 ? 'Start clock' : 'Resume'}
+        {over ? t('clock.restart') : running ? t('clock.pause') : left === minutes * 60_000 ? t('clock.start') : t('clock.resume')}
       </button>
     </div>
   );
 }
 
 function Score({ side }: { side: 'home' | 'away' }) {
+  const { t } = useI18n();
   const teams = useStore((s) => s.teams);
   const roster = useStore((s) => s.roster);
   const history = useStore((s) => s.history);
@@ -32,7 +35,7 @@ function Score({ side }: { side: 'home' | 'away' }) {
   const fixture = useMemo(() => selectFixture({ teams, config, history }), [teams, config, history]);
   if (!fixture) return null;
   const id = fixture[side];
-  const team = teams.find((t) => t.id === id)!;
+  const team = teams.find((tm) => tm.id === id)!;
   const bib = bibOf(id) ?? BIBS[0];
   const names = (roster?.[id] ?? []).map((p) => p.name).join(', ');
   return (
@@ -40,19 +43,20 @@ function Score({ side }: { side: 'home' | 'away' }) {
       <h2 className="score__name">{team.name}</h2>
       {names && <p className="score__roster">{names}</p>}
       <div className="score__row">
-        <output className="score__num" aria-label={`${team.name} goals`}>{value}</output>
-        <button className="goalbtn" onClick={() => goal(side, 1)} aria-label={`Goal for ${team.name}`}>+1</button>
+        <output className="score__num" aria-label={t('match.goals', { team: team.name })}>{value}</output>
+        <button className="goalbtn" onClick={() => goal(side, 1)} aria-label={t('match.goalFor', { team: team.name })}>+1</button>
       </div>
-      <button className="score__undo" onClick={() => goal(side, -1)} disabled={value === 0}>Remove a goal</button>
+      <button className="score__undo" onClick={() => goal(side, -1)} disabled={value === 0}>{t('match.removeGoal')}</button>
     </section>
   );
 }
 
 export function Match({ onDone }: { onDone: () => void }) {
+  const { t, L } = useI18n();
   const { teams, config, history, live, fullTime, setShootout } = useStore();
   const fixture = useMemo(() => selectFixture({ teams, config, history }), [teams, config, history]);
-  const name = (id: string) => teams.find((t) => t.id === id)?.name ?? id;
-  const ids = teams.map((t) => t.id);
+  const name = (id: string) => teams.find((tm) => tm.id === id)?.name ?? id;
+  const ids = teams.map((tm) => tm.id);
   const knockout = inPlayoffs(config, ids, history);
   const setup = playoffSetup(config, ids, history);
 
@@ -64,14 +68,14 @@ export function Match({ onDone }: { onDone: () => void }) {
         <section className="done">
           {out && champ ? (
             <div className="champ" style={{ background: champ.color, color: champ.ink }}>
-              <p className="champ__tag">Champions</p>
+              <p className="champ__tag">{t('match.champions')}</p>
               <h2 className="champ__name">{name(out.champion)}</h2>
             </div>
           ) : (
-            <h2 className="done__title">All rounds played</h2>
+            <h2 className="done__title">{t('match.allPlayed')}</h2>
           )}
-          <p className="hint">Check the {setup ? 'bracket' : 'final table'}, or reopen the last match from Results if you need to fix it.</p>
-          <button className="btn btn--primary btn--wide" onClick={onDone}>{setup ? 'See the bracket' : 'See the table'}</button>
+          <p className="hint">{setup ? t('match.doneBracket') : t('match.doneTable')}</p>
+          <button className="btn btn--primary btn--wide" onClick={onDone}>{setup ? t('match.seeBracket') : t('match.seeTable')}</button>
         </section>
       </div>
     );
@@ -82,22 +86,22 @@ export function Match({ onDone }: { onDone: () => void }) {
   const shootoutWinner = needShootout && live.shootout ? fixture[live.shootout] : undefined;
   const next = needShootout && !live.shootout
     ? undefined
-    : nextFixture(config, teams.map((t) => t.id), [...history, { ...fixture, homeScore: live.home, awayScore: live.away, shootoutWinner }]);
-  const resting = teams.filter((t) => t.id !== fixture.home && t.id !== fixture.away);
+    : nextFixture(config, teams.map((tm) => tm.id), [...history, { ...fixture, homeScore: live.home, awayScore: live.away, shootoutWinner }]);
+  const resting = teams.filter((tm) => tm.id !== fixture.home && tm.id !== fixture.away);
   const total = leagueTotal(config, ids);
   const dynamic = config.format === 'winner-stays' || config.format === 'timed-rotation' || knockout || (total !== null && history.length + 1 >= total);
 
   return (
     <div className="screen">
-      <p className="matchno">{fixture.label ?? `Match ${history.length + 1}`}</p>
+      <p className="matchno">{L(fixture.label ?? `Match ${history.length + 1}`)}</p>
       <Clock />
       <Score side="home" />
       <Score side="away" />
 
       {needShootout && (
-        <section className="shootout" aria-label="Penalty shootout">
-          <p className="shootout__title">Level after full time. Who won the penalty shootout?</p>
-          <div className="seg" role="radiogroup" aria-label="Shootout winner">
+        <section className="shootout" aria-label={t('match.shootoutAria')}>
+          <p className="shootout__title">{t('match.shootoutQ')}</p>
+          <div className="seg" role="radiogroup" aria-label={t('match.shootoutWinner')}>
             {(['home', 'away'] as const).map((side) => (
               <button key={side} type="button" role="radio" aria-checked={live.shootout === side}
                 className="seg__item" onClick={() => setShootout(side)}>
@@ -109,20 +113,20 @@ export function Match({ onDone }: { onDone: () => void }) {
       )}
 
       <button className="btn btn--primary btn--wide" onClick={fullTime} disabled={needShootout && !live.shootout}>
-        Full time
+        {t('match.fullTime')}
       </button>
 
       {next !== undefined && (
         <p className="next">
           {next ? (
             <>
-              <strong>{dynamic ? 'Up next if it ends like this: ' : 'Up next: '}</strong>
-              {next.label ? `${next.label}, ` : ''}{name(next.home)} vs {name(next.away)}
+              <strong>{dynamic ? t('match.upNextIf') : t('match.upNext')}</strong>
+              {next.label ? `${L(next.label)}, ` : ''}{t('match.vs', { home: name(next.home), away: name(next.away) })}
             </>
           ) : (
-            <strong>{fixture.label === 'Final' ? 'This is the final' : 'This is the last match'}</strong>
+            <strong>{fixture.label === 'Final' ? t('match.final') : t('match.last')}</strong>
           )}
-          {!knockout && RESTING_FORMATS.includes(config.format) && teams.length <= 6 && resting.length > 0 && <span className="next__rest"> Sitting out now: {resting.map((t) => t.name).join(', ')}.</span>}
+          {!knockout && RESTING_FORMATS.includes(config.format) && teams.length <= 6 && resting.length > 0 && <span className="next__rest">{t('match.sitting', { names: resting.map((tm) => tm.name).join(', ') })}</span>}
         </p>
       )}
     </div>
