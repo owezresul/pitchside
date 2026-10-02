@@ -12,7 +12,7 @@ export const CONTACT = {
  * Link for donations (GitHub Sponsors, Ko-fi, Buy Me a Coffee...). While this is empty the
  * Donate button stays hidden and only the contact links show.
  */
-export const DONATE_URL = '';
+export const DONATE_URL = 'https://revolut.me/ovezmyradov';
 
 /** Android builds are attached to GitHub releases (see .github/workflows/android.yml). */
 export const APK_URL = `${REPO_URL}/releases/latest`;
