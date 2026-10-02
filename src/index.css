@@ -278,5 +278,15 @@ h1, h2, p { margin: 0; }
 .legend__dot--direct { background: var(--direct); }
 .champ--small .champ__name { font-size: clamp(34px, 11vw, 52px); }
 .champ--small { padding: 14px 16px 16px; }
-.getapp { display: flex; flex-direction: column; gap: 10px; padding: 16px; border: 1.5px solid var(--line); border-radius: var(--r-lg); background: var(--raised); }
-.getapp__links { display: flex; flex-wrap: wrap; gap: 10px; }
+.getapp { padding: 16px 16px 0; border: 1.5px solid var(--line); border-radius: var(--r-lg); background: var(--raised); overflow: hidden; }
+.getapp__head { display: flex; align-items: center; gap: 14px; padding-bottom: 14px; }
+.getapp__icon { flex: none; width: 48px; height: 48px; border-radius: 12px; }
+.getapp__title { font-size: 18px; font-weight: 750; line-height: 1.2; }
+.getapp__note { margin-top: 2px; color: var(--muted); font-size: 13.5px; line-height: 1.35; }
+.getapp__list { margin: 0 -16px; padding: 0; list-style: none; }
+.getapp__row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 58px; padding: 0 16px; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: transparent; color: inherit; font: inherit; font-weight: 650; text-align: left; text-decoration: none; }
+.getapp__row:active { background: var(--raised-2); }
+.getapp__chip { display: grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 10px; background: var(--raised-2); }
+.getapp__row--primary .getapp__chip { background: var(--card); color: var(--card-ink); }
+.getapp__label { flex: 1; }
+.getapp__go { flex: none; color: var(--muted); }
