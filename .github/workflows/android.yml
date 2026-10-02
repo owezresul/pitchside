@@ -6,6 +6,10 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
+    tags: ['v*']
+
+permissions:
+  contents: write
 
 jobs:
   apk:
@@ -22,9 +26,20 @@ jobs:
           java-version: 21
       - run: npm ci
       - run: npm run android:sync
+        env:
+          # Set under Settings -> Secrets and variables -> Actions -> Variables. Used in the share caption.
+          VITE_APP_URL: ${{ vars.APP_URL }}
       - run: ./gradlew assembleDebug
         working-directory: android
       - uses: actions/upload-artifact@v4
         with:
           name: pitchside-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
+      # Pushing a tag like v0.1.0 also publishes the APK as a GitHub release, which the website's download button points to.
+      - name: Name the APK
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk pitchside.apk
+      - uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          files: pitchside.apk

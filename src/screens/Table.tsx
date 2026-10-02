@@ -1,8 +1,9 @@
 import { BIBS, bibOf, useStore } from '../store';
-import { leagueHistory, leagueTables, type LeagueTable } from '../engine';
+import { leagueChampions, leagueHistory, leagueTables, type LeagueTable } from '../engine';
 import { renderShareCard } from '../lib/shareCard';
 import { SessionActions } from '../components/SessionActions';
 import { useI18n } from '../i18n/react';
+import { ChampionCard } from '../components/ChampionCard';
 
 function Standings({ t: tbl, name }: { t: LeagueTable; name: (id: string) => string }) {
   const { t, L } = useI18n();
@@ -11,7 +12,7 @@ function Standings({ t: tbl, name }: { t: LeagueTable; name: (id: string) => str
       {tbl.title && <h3 className="round__name table__title">{L(tbl.title)}</h3>}
       <table className="table">
         <thead>
-          <tr><th className="table__team">{t('table.team')}</th><th>{t('col.p')}</th><th>{t('col.w')}</th><th>{t('col.d')}</th><th>{t('col.l')}</th><th>{t('col.gd')}</th><th>{t('col.pts')}</th></tr>
+          <tr><th className="table__rank">#</th><th className="table__team">{t('table.team')}</th><th>{t('col.p')}</th><th>{t('col.w')}</th><th>{t('col.d')}</th><th>{t('col.l')}</th><th>{t('col.gd')}</th><th>{t('col.pts')}</th></tr>
         </thead>
         <tbody>
           {tbl.rows.map((r, i) => (
@@ -19,8 +20,10 @@ function Standings({ t: tbl, name }: { t: LeagueTable; name: (id: string) => str
               className={[
                 i < tbl.through ? 'table__row--q' : '',
                 i < tbl.byes ? 'table__row--bye' : '',
+                tbl.byes > 0 && i === tbl.byes - 1 && tbl.byes < tbl.through ? 'table__row--byecut' : '',
                 tbl.through > 0 && i === tbl.through - 1 && tbl.through < tbl.rows.length ? 'table__row--cut' : '',
               ].join(' ')}>
+              <td className="table__rank">{i + 1}</td>
               <td className="table__team">
                 <span className="bib bib--sm" style={{ background: (bibOf(r.teamId) ?? BIBS[0]).color }} aria-hidden />
                 {name(r.teamId)}
@@ -37,7 +40,7 @@ function Standings({ t: tbl, name }: { t: LeagueTable; name: (id: string) => str
 }
 
 export function Table() {
-  const { t, lang } = useI18n();
+  const { t, L, lang } = useI18n();
   const teams = useStore((s) => s.teams);
   const config = useStore((s) => s.config);
   const all = useStore((s) => s.history);
@@ -47,11 +50,22 @@ export function Table() {
   const name = (id: string) => teams.find((tm) => tm.id === id)?.name ?? id;
   const first = tables[0];
   const grouped = tables.length > 1;
+  const champs = leagueChampions(config, ids, all);
 
   return (
     <div className="screen">
+      {champs?.map((c) => (
+        <ChampionCard key={c.teamId} teamId={c.teamId} compact={champs.length > 1}
+          tag={c.title ? t('champ.groupWinner', { group: L(c.title) }) : undefined} />
+      ))}
       <h2 className="h2">{grouped ? t('table.groups') : t('table.title')}</h2>
       {tables.map((tb, i) => <Standings key={i} t={tb} name={name} />)}
+      {first.through > 0 && (
+        <ul className="legend">
+          {first.byes > 0 && <li><i className="legend__dot legend__dot--direct" />{t('legend.direct')}</li>}
+          <li><i className="legend__dot" />{first.byes > 0 ? t('legend.firstRound') : t('legend.through')}</li>
+        </ul>
+      )}
       {first.through > 0 && (
         <p className="hint">
           {grouped

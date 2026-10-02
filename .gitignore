@@ -35,3 +35,7 @@ dev-dist
 *.keystore
 *.jks
 keystore.properties
+
+# Firebase service account keys: never commit these
+*-firebase-adminsdk-*.json
+serviceAccount*.json

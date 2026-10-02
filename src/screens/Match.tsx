@@ -2,7 +2,8 @@ import { useMemo } from 'react';
 import { BIBS, bibOf, selectFixture, useStore } from '../store';
 import { formatClock, useRemaining } from '../lib/useRemaining';
 import { useI18n } from '../i18n/react';
-import { inPlayoffs, leagueTotal, nextFixture, playBracket, playoffSetup } from '../engine';
+import { ChampionCard } from '../components/ChampionCard';
+import { inPlayoffs, leagueChampions, leagueTotal, nextFixture, playBracket, playoffSetup } from '../engine';
 
 const RESTING_FORMATS = ['round-robin', 'winner-stays', 'timed-rotation'];
 
@@ -63,6 +64,7 @@ export function Match({ onDone }: { onDone: () => void }) {
   if (!fixture) {
     const out = setup && !setup.projected ? playBracket(setup.seeds, setup.history, setup.thirdPlace).outcome : null;
     const champ = out ? bibOf(out.champion) ?? BIBS[0] : null;
+    const champs = leagueChampions(config, ids, history);
     return (
       <div className="screen">
         <section className="done">
@@ -71,6 +73,11 @@ export function Match({ onDone }: { onDone: () => void }) {
               <p className="champ__tag">{t('match.champions')}</p>
               <h2 className="champ__name">{name(out.champion)}</h2>
             </div>
+          ) : champs ? (
+            champs.map((c) => (
+              <ChampionCard key={c.teamId} teamId={c.teamId} compact={champs.length > 1}
+                tag={c.title ? t('champ.groupWinner', { group: L(c.title) }) : undefined} />
+            ))
           ) : (
             <h2 className="done__title">{t('match.allPlayed')}</h2>
           )}

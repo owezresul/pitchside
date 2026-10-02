@@ -16,7 +16,7 @@ export const BIBS = [
 ] as const;
 
 export const MIN_TEAMS = 2;
-export const MAX_TEAMS = 32;
+export const MAX_TEAMS = 64;
 
 export interface Bib { name: string; color: string; ink: string }
 /** First six are the classic training bibs; after that colors are generated so every team stays distinct. */

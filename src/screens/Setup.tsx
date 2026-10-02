@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { bibAt, MAX_TEAMS, MIN_TEAMS, useStore } from '../store';
 import { FormatPicker } from '../components/FormatPicker';
+import { GetApp } from '../components/GetApp';
 import { Setting, Stepper, Switch } from '../components/controls';
 import { useI18n } from '../i18n/react';
 import type { Key } from '../i18n/dict';
@@ -136,6 +137,8 @@ export function Setup() {
           </>
         )}
       </details>
+
+      <GetApp />
 
       <div className="dock">
         <button className="btn btn--primary btn--wide" onClick={s.start}

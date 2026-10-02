@@ -253,7 +253,7 @@ export function normalizeConfig(config: FormatConfig, n: number): FormatConfig {
         playoffs: config.playoffs ? { ...config.playoffs, qualifiers: clamp(config.playoffs.qualifiers, 2, Math.max(2, n)) } : null,
       };
     case 'groups': {
-      const groups = clamp(config.groups, 2, Math.max(2, Math.min(8, Math.floor(n / 2))));
+      const groups = clamp(config.groups, 2, Math.max(2, Math.min(16, Math.floor(n / 2))));
       return { ...config, groups, cycles: clamp(config.cycles, 1, 4), advance: clamp(config.advance, 1, Math.max(1, Math.floor(n / groups))) };
     }
     case 'swiss': {
@@ -285,3 +285,16 @@ export function defaultFor(id: FormatId, n: number): FormatConfig {
 }
 
 export { newSeed };
+
+export interface LeagueChampion { title: string | null; teamId: TeamId }
+
+/**
+ * Winners of a finished league stage that has no playoffs after it: the table leader,
+ * or one leader per group. null while matches remain, or when a knockout decides the champion instead.
+ */
+export function leagueChampions(config: FormatConfig, ids: readonly TeamId[], history: readonly PlayedMatch[]): LeagueChampion[] | null {
+  const plan = stagePlan(config, ids);
+  if (!plan || playoffRule(config, ids) || history.length < plan.fixtures.length) return null;
+  const champs = leagueTables(config, ids, history).flatMap((t) => (t.rows[0] ? [{ title: t.title, teamId: t.rows[0].teamId }] : []));
+  return champs.length ? champs : null;
+}

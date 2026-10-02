@@ -53,8 +53,13 @@ export async function renderShareCard(
       const bib = bibOf(r.teamId) ?? BIBS[0];
       if (i % 2 === 0) { g.fillStyle = 'rgba(238,241,230,0.05)'; g.fillRect(70, ry, W - 140, rowH); }
       g.fillStyle = bib.color; g.fillRect(70, ry, 14, rowH);
-      g.textAlign = 'left'; g.fillStyle = '#EEF1E6'; g.font = `800 ${big ? 44 : 34}px ${FONT}`;
-      g.fillText(name(r.teamId), 110, ry + rowH / 2 + (big ? 15 : 12));
+      g.textAlign = 'left'; g.fillStyle = '#8FA89B'; g.font = `700 ${big ? 36 : 28}px ${FONT}`;
+      g.fillText(String(i + 1), 108, ry + rowH / 2 + (big ? 13 : 10));
+      let nameSize = big ? 44 : 34;
+      g.font = `800 ${nameSize}px ${FONT}`;
+      while (nameSize > 22 && g.measureText(name(r.teamId)).width > 560 - 170) { nameSize -= 2; g.font = `800 ${nameSize}px ${FONT}`; }
+      g.fillStyle = '#EEF1E6';
+      g.fillText(name(r.teamId), 170, ry + rowH / 2 + Math.round(nameSize / 3));
       g.textAlign = 'right'; g.font = `500 ${big ? 38 : 30}px ${FONT}`; g.fillStyle = '#B9CBC0';
       const my = ry + rowH / 2 + (big ? 13 : 10);
       g.fillText(String(r.played), cols.p, my); g.fillText(String(r.won), cols.w, my);
@@ -211,17 +216,23 @@ export async function renderBracketCard(teams: Team[], bracket: Bracket, seedCou
   return new Promise((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error('Could not render image'))), 'image/png'));
 }
 
-/** Native share sheet on phones; falls back to a PNG download on desktop. */
-export async function shareOrDownload(blob: Blob) {
+/**
+ * Shares the image with a text caption (the link to the app). On phones this opens the share sheet,
+ * on desktop it saves the PNG and copies the caption.
+ */
+export async function shareOrDownload(blob: Blob, text: string): Promise<'shared' | 'downloaded'> {
   if (isNative) {
-    try { await shareImageNative(blob, 'Pitchside'); } catch { /* cancelled */ }
-    return;
+    try { await shareImageNative(blob, 'Pitchside', text); } catch { /* cancelled */ }
+    return 'shared';
   }
-  const file = new File([blob], 'table.png', { type: 'image/png' });
+  const file = new File([blob], 'pitchside.png', { type: 'image/png' });
   if (navigator.canShare?.({ files: [file] })) {
-    try { await navigator.share({ files: [file], title: 'Table' }); return; } catch { /* cancelled */ return; }
+    try { await navigator.share({ files: [file], title: 'Pitchside', text }); } catch { /* cancelled */ }
+    return 'shared';
   }
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob); a.download = 'table.png'; a.click();
+  a.href = URL.createObjectURL(blob); a.download = 'pitchside.png'; a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  try { await navigator.clipboard.writeText(text); } catch { /* clipboard not available */ }
+  return 'downloaded';
 }

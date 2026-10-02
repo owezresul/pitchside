@@ -22,11 +22,11 @@ It installs to your home screen and works with no signal, so it keeps running on
 
 **Around the match**
 
-- Up to 32 teams, named bib colours for the first six.
+- Up to 64 teams, named bib colours for the first six. Tables show positions, green marks teams that skip the first knockout round and yellow marks the rest of the qualifiers. A finished league shows its champion.
 - Match timer with presets or any custom length, survives a page refresh.
 - One-tap goals, undo of the last result, auto-generated next match.
 - Optional player list with balanced or random splitting into teams.
-- Shareable PNG images of tables and brackets, drawn on a canvas in the browser.
+- Shareable PNG images of tables and brackets, drawn on a canvas in the browser. Sharing sends the picture with a caption that links to the web app, where people can try it or install it.
 - English and Russian, switchable from the globe menu in the header. The language is remembered, and the first visit follows the browser language.
 
 ## Tech
@@ -53,6 +53,25 @@ npm test           # engine tests
 npm run build      # type-check + production build (includes the service worker)
 npm run preview    # serve the production build, test install/offline here
 ```
+
+## Deploy (Firebase Hosting)
+
+The web app is a static site, so Firebase Hosting's free plan is enough.
+
+1. Create a Firebase project and note its project id. Hosting then lives at `https://PROJECT_ID.web.app`.
+2. `npm install`, then `npx firebase-tools login`.
+3. `npx firebase-tools use --add`, pick the project, and give it the alias `default`. This creates `.firebaserc`, which is safe to commit.
+4. `npm run deploy` builds and publishes. `firebase.json` keeps the service worker uncached and the hashed assets cached for a year, so updates reach users quickly.
+
+**Auto-deploy from GitHub:** in the Firebase console open Project settings, Service accounts, Generate new private key. Paste the whole JSON file into a GitHub repository secret named `FIREBASE_SERVICE_ACCOUNT` (Settings, Secrets and variables, Actions), then delete the downloaded file. After that every push to `main` deploys through `.github/workflows/deploy.yml`.
+
+Then add the `APP_URL` variable described below so the Android app's share caption links to the site.
+
+## Share link
+
+The caption that goes with a shared picture links to the deployed web app. In the browser it uses the address the app runs on. The Android app has no web address of its own, so set `VITE_APP_URL` (see `.env.example`) before building it. On GitHub, add a repository variable named `APP_URL` under Settings, Secrets and variables, Actions, Variables. Without it the caption has no link.
+
+To publish the APK that the website's "Download for Android" button points to, push a version tag: `git tag v0.1.0 && git push origin v0.1.0`. The Android workflow attaches the APK to a GitHub release.
 
 ## Translations
 

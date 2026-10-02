@@ -17,11 +17,11 @@ function toBase64(blob: Blob): Promise<string> {
 }
 
 /** Opens the Android share sheet with the image attached. */
-export async function shareImageNative(blob: Blob, title: string) {
+export async function shareImageNative(blob: Blob, title: string, text?: string) {
   const path = `share-${Date.now()}.png`;
   await Filesystem.writeFile({ path, data: await toBase64(blob), directory: Directory.Cache });
   const { uri } = await Filesystem.getUri({ path, directory: Directory.Cache });
-  await Share.share({ title, files: [uri] });
+  await Share.share({ title, text, files: [uri] });
 }
 
 /** Buzz when the match clock hits zero. */

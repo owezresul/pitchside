@@ -101,7 +101,7 @@ export function FormatPicker() {
         return (
           <>
             <Setting label={t('set.groupCount')}>
-              <Stepper label={t('set.groupCount')} value={cfg.groups} min={2} max={Math.max(2, Math.min(8, Math.floor(n / 2)))} onChange={(v) => setConfig({ ...cfg, groups: v })} />
+              <Stepper label={t('set.groupCount')} value={cfg.groups} min={2} max={Math.max(2, Math.min(16, Math.floor(n / 2)))} onChange={(v) => setConfig({ ...cfg, groups: v })} />
             </Setting>
             <Setting label={t('set.groupRounds')}>
               <Stepper label={t('set.groupRounds')} value={cfg.cycles} min={1} max={4} onChange={(v) => setConfig({ ...cfg, cycles: v })} />

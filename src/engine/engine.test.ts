@@ -386,3 +386,55 @@ describe('Champions League style league phase', () => {
     expect(table.byes).toBe(8);
   });
 });
+
+import { leagueChampions } from './index';
+
+describe('champions of league stages and big tournaments', () => {
+  const play = (cfg: FormatConfig, ids: string[]) => {
+    let h: PlayedMatch[] = [];
+    for (let guard = 0; guard < 5000; guard++) {
+      const f = nextFixture(cfg, ids, h);
+      if (!f) break;
+      const homeWins = Number(f.home.slice(1)) < Number(f.away.slice(1));
+      h = [...h, { home: f.home, away: f.away, homeScore: homeWins ? 2 : 0, awayScore: homeWins ? 0 : 1 }];
+    }
+    return h;
+  };
+
+  it('a finished league with no playoffs has one champion, and none before it ends', () => {
+    const ids = ['t0', 't1', 't2', 't3'];
+    const cfg: FormatConfig = { format: 'round-robin', cycles: 1, playoffs: null };
+    expect(leagueChampions(cfg, ids, [])).toBeNull();
+    const h = play(cfg, ids);
+    expect(h).toHaveLength(6);
+    expect(leagueChampions(cfg, ids, h.slice(0, 5))).toBeNull();
+    expect(leagueChampions(cfg, ids, h)).toEqual([{ title: null, teamId: 't0' }]);
+  });
+
+  it('groups without playoffs give one winner per group; with playoffs there is no league champion', () => {
+    const ids = Array.from({ length: 8 }, (_, i) => `t${i}`);
+    const cfg: FormatConfig = { format: 'groups', groups: 2, cycles: 1, advance: 2, draw: 'seeded', seed: 1, playoffs: null };
+    const c = leagueChampions(cfg, ids, play(cfg, ids))!;
+    expect(c.map((x) => x.title)).toEqual(['Group A', 'Group B']);
+    expect(c.map((x) => x.teamId)).toEqual(['t0', 't1']);
+    expect(leagueChampions({ ...cfg, playoffs: { thirdPlace: false } }, ids, play({ ...cfg, playoffs: { thirdPlace: false } }, ids))).toBeNull();
+  });
+
+  it('a Champions-style league phase without playoffs crowns the table leader', () => {
+    const ids = Array.from({ length: 10 }, (_, i) => `t${i}`);
+    const cfg: FormatConfig = { format: 'swiss', matches: 4, seed: 2, playoffs: null };
+    const h = play(cfg, ids);
+    expect(h).toHaveLength(20);
+    expect(leagueChampions(cfg, ids, h)).toHaveLength(1);
+  });
+
+  it('64 teams: knockout bracket and 16 groups both run to the end', () => {
+    const ids = Array.from({ length: 64 }, (_, i) => `t${i}`);
+    expect(play({ format: 'knockout', thirdPlace: true }, ids)).toHaveLength(64);
+    const g = defaultFor('groups', 64);
+    const norm = normalizeConfig({ ...g, format: 'groups', groups: 16, advance: 2 } as FormatConfig, 64);
+    expect(norm.format === 'groups' && norm.groups).toBe(16);
+    const h = play(norm, ids);
+    expect(h).toHaveLength(16 * 6 + 31); // 16 groups of 4, then 32 qualifiers
+  });
+});
