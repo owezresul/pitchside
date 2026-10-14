@@ -25,7 +25,7 @@ export const APK_URL = `${REPO_URL}/releases/latest`;
 export function getShareUrl(): string | null {
   const env = import.meta.env.VITE_APP_URL as string | undefined;
   if (env) return env.replace(/\/$/, '');
-  if (isNative) return null;
+  if (isNative) return 'https://pitchside.web.app';
   const { hostname, origin } = window.location;
   return hostname === 'localhost' || hostname === '127.0.0.1' ? null : origin;
 }
